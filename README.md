@@ -6,11 +6,10 @@ It reads both private key and public key from PKCS12 to sign or validate XML fil
 
 Usage
 ----------------
-Create `PrivateKeyData` by handing a path and the passphrase for the key file and the private key inside.
-Create either an `XmlSigner` or an `XmlValidator` with it.
-Call `sign` with the path to the unsigned XML file you want to sign and another path indicating where to put the result.
+Create `PrivateKeyData` by handing a path and the passphrase for the key file and the private key inside.  
+Create either an `XmlSigner` or an `XmlValidator` with it.  
+Call `sign` with the path to the unsigned XML file you want to sign and another path indicating where to put the result.  
 Call `verify` with the path to the signed XML file you want to verify.
-
 
 License
 -----------------
