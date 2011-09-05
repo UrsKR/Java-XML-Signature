@@ -22,22 +22,22 @@ import static javax.xml.crypto.dsig.Transform.ENVELOPED;
 
 public class XmlSigner {
 
-    public static final String Entire_Document = "";
-
-    private final XMLSignatureFactory factory = XMLSignatureFactory.getInstance("DOM");
+    private static final String Entire_Document = "";
+    private static final String Mechanism_Type_Dom = "DOM";
+    private final XMLSignatureFactory factory = XMLSignatureFactory.getInstance(Mechanism_Type_Dom);
     private final PrivateKeyProvider provider;
 
     public XmlSigner() throws IOException, NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException {
         this.provider = new Pkcs12PrivateKeyProvider(factory, new PrivateKeyData("mykeystore.jks", "changeit", "changeit"));
     }
 
-    public void sign() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, KeyStoreException, IOException, UnrecoverableEntryException, CertificateException, ParserConfigurationException, SAXException, MarshalException, XMLSignatureException, TransformerException {
+    public void sign(String pathToUnsignedDocument, String pathToSignedDocument) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, KeyStoreException, IOException, UnrecoverableEntryException, CertificateException, ParserConfigurationException, SAXException, MarshalException, XMLSignatureException, TransformerException {
+        Document document = new DocumentReader(pathToUnsignedDocument).loadDocument();
         SignedInfo signedInfo = createSignature();
         KeyInfo keyInfo = provider.loadKeyInfo();
         PrivateKey privateKey = provider.loadPrivateKey();
-        Document document = new DocumentReader().loadDocument();
         sign(document, privateKey, signedInfo, keyInfo);
-        new DocumentWriter().writeDocument(document);
+        new DocumentWriter(pathToSignedDocument).writeDocument(document);
     }
 
     private void sign(Document document, PrivateKey privateKey, SignedInfo signedInfo, KeyInfo keyInfo) throws MarshalException, XMLSignatureException {

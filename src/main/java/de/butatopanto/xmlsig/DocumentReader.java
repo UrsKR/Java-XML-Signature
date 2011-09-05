@@ -12,8 +12,8 @@ public class DocumentReader {
 
     private String pathToFile;
 
-    public DocumentReader() {
-        pathToFile = "purchaseOrder.xml";
+    public DocumentReader(String pathToFile) {
+        this.pathToFile = pathToFile;
     }
 
     public Document loadDocument() throws SAXException, IOException, ParserConfigurationException {

@@ -3,7 +3,6 @@ package de.butatopanto.xmlsig;
 import org.w3c.dom.Document;
 
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -16,8 +15,8 @@ public class DocumentWriter {
 
     private String pathToFile;
 
-    public DocumentWriter() {
-        pathToFile = "signedPurchaseOrder.xml";
+    public DocumentWriter(String pathToFile) {
+        this.pathToFile = pathToFile;
     }
 
     public void writeDocument(Document document) throws FileNotFoundException, TransformerException {
