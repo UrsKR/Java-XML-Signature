@@ -26,7 +26,7 @@ public class XmlSigner extends DomValidationOperator {
     private final PrivateKeyProvider provider;
 
     public XmlSigner(PrivateKeyData keyData) throws IOException, NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException {
-        this.provider = new Pkcs12PrivateKeyProvider(factory, keyData);
+        this.provider = new Pkcs12KeyProvider(factory, keyData);
     }
 
     public void sign(String pathToUnsignedDocument, String pathToSignedDocument) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, KeyStoreException, IOException, UnrecoverableEntryException, CertificateException, ParserConfigurationException, SAXException, MarshalException, XMLSignatureException, TransformerException {

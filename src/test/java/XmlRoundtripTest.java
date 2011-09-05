@@ -21,17 +21,21 @@ public class XmlRoundtripTest {
 
     @Before
     public void createSignerWithKeyData() throws Exception {
-        String pathToKeystore = getPathToFileOnClasspath("certificate.p12");
-        String passphraseForKeystore = "pass";
-        String passphraseForKey = "pass";
-        PrivateKeyData keyData = new PrivateKeyData(pathToKeystore, passphraseForKeystore, passphraseForKey);
+        PrivateKeyData keyData = createKeyData();
         this.signer = new XmlSigner(keyData);
     }
 
     @Before
     public void createValidatorWithKeyData() throws Exception {
-        String pathToPublicKey = getPathToFileOnClasspath("publicKey.p7b");
-        this.validator = new XmlValidator(pathToPublicKey);
+        PrivateKeyData keyData = createKeyData();
+        this.validator = new XmlValidator(keyData);
+    }
+
+    private PrivateKeyData createKeyData() {
+        String pathToKeystore = getPathToFileOnClasspath("certificate.p12");
+        String passphraseForKeystore = "pass";
+        String passphraseForKey = "pass";
+        return new PrivateKeyData(pathToKeystore, passphraseForKeystore, passphraseForKey);
     }
 
     @Test

@@ -15,7 +15,7 @@ import java.util.List;
 
 import static java.util.Collections.singletonList;
 
-public class Pkcs12PrivateKeyProvider implements PrivateKeyProvider {
+public class Pkcs12KeyProvider implements PrivateKeyProvider {
 
     public static final String Keystore_Type_Pkcs12 = "pkcs12";
     private final XMLSignatureFactory factory;
@@ -23,7 +23,7 @@ public class Pkcs12PrivateKeyProvider implements PrivateKeyProvider {
     private KeyStore keyStore;
     private PrivateKeyData keyData;
 
-    public Pkcs12PrivateKeyProvider(XMLSignatureFactory factory, PrivateKeyData keyData) throws IOException, NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableEntryException {
+    public Pkcs12KeyProvider(XMLSignatureFactory factory, PrivateKeyData keyData) throws IOException, NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableEntryException {
         this.factory = factory;
         this.keyData = keyData;
         this.keyStore = loadKeystore();
@@ -37,6 +37,10 @@ public class Pkcs12PrivateKeyProvider implements PrivateKeyProvider {
 
     public PrivateKey loadPrivateKey() {
         return keyEntry.getPrivateKey();
+    }
+
+    public PublicKey loadPublicKey() {
+        return loadCertificate().getPublicKey();
     }
 
     private X509Certificate loadCertificate() {

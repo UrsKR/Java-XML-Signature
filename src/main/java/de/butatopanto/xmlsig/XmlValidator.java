@@ -13,7 +13,10 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -22,10 +25,10 @@ import static javax.xml.crypto.dsig.XMLSignature.XMLNS;
 
 public class XmlValidator extends DomValidationOperator {
 
-    private String pathToPublicKeyStore;
+    private Pkcs12KeyProvider keyProvider;
 
-    public XmlValidator(String pathToPublicKeyStore) {
-        this.pathToPublicKeyStore = pathToPublicKeyStore;
+    public XmlValidator(PrivateKeyData keyData) throws IOException, NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException {
+        keyProvider = new Pkcs12KeyProvider(factory, keyData);
     }
 
     /**
@@ -33,8 +36,7 @@ public class XmlValidator extends DomValidationOperator {
      */
     public boolean isValid(String pathToDocument) throws SignatureNotFound, MarshalException, XMLSignatureException, CertificateException, IOException, SAXException, ParserConfigurationException {
         Document document = loadDocument(pathToDocument);
-        PublicKey key = loadPublicKey();
-        return validateDocumentWithKey(document, key);
+        return validateDocumentWithKey(document, keyProvider.loadPublicKey());
     }
 
     private boolean validateDocumentWithKey(Document document, PublicKey key) throws MarshalException, XMLSignatureException {
@@ -48,15 +50,7 @@ public class XmlValidator extends DomValidationOperator {
         return new DocumentReader(pathToDocument).loadDocument();
     }
 
-    private PublicKey loadPublicKey() throws CertificateException, IOException {
-        InputStream inStream = new FileInputStream(pathToPublicKeyStore);
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
-        inStream.close();
-        return cert.getPublicKey();
-    }
-
-    private Node findSignatureElement(Document document) {
+      private Node findSignatureElement(Document document) {
         NodeList nodeList = document.getElementsByTagNameNS(XMLNS, "Signature");
         if (nodeList.getLength() == 0) {
             throw new SignatureNotFound();
