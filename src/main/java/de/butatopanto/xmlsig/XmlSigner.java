@@ -1,3 +1,5 @@
+package de.butatopanto.xmlsig;
+
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -32,7 +34,7 @@ public class XmlSigner {
         SignedInfo signedInfo = createSignature();
         KeyInfo keyInfo = provider.loadKeyInfo();
         PrivateKey privateKey = provider.loadPrivateKey();
-        Document document = new DocumentLoader().loadDocument();
+        Document document = new DocumentReader().loadDocument();
         sign(document, privateKey, signedInfo, keyInfo);
         new DocumentWriter().writeDocument(document);
     }

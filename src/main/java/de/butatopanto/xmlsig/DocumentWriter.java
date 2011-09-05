@@ -1,3 +1,5 @@
+package de.butatopanto.xmlsig;
+
 import org.w3c.dom.Document;
 
 import javax.xml.transform.Transformer;
