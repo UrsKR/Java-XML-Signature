@@ -7,14 +7,9 @@ import javax.xml.crypto.dsig.dom.DOMSignContext;
 import javax.xml.crypto.dsig.keyinfo.KeyInfo;
 import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.*;
+import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 
@@ -37,13 +32,13 @@ public class XmlSigner {
         SignedInfo signedInfo = createSignature();
         KeyInfo keyInfo = provider.loadKeyInfo();
         PrivateKey privateKey = provider.loadPrivateKey();
-        Document doc = loadDocument();
-        sign(doc, privateKey, signedInfo, keyInfo);
-        writeDocument(doc);
+        Document document = new DocumentLoader().loadDocument();
+        sign(document, privateKey, signedInfo, keyInfo);
+        new DocumentWriter().writeDocument(document);
     }
 
-    private void sign(Document doc, PrivateKey privateKey, SignedInfo signedInfo, KeyInfo keyInfo) throws MarshalException, XMLSignatureException {
-        DOMSignContext signContext = new DOMSignContext(privateKey, doc.getDocumentElement());
+    private void sign(Document document, PrivateKey privateKey, SignedInfo signedInfo, KeyInfo keyInfo) throws MarshalException, XMLSignatureException {
+        DOMSignContext signContext = new DOMSignContext(privateKey, document.getDocumentElement());
         XMLSignature signature = factory.newXMLSignature(signedInfo, keyInfo);
         signature.sign(signContext);
     }
@@ -55,18 +50,5 @@ public class XmlSigner {
         SignatureMethod signatureMethod = factory.newSignatureMethod(RSA_SHA1, null);
         CanonicalizationMethod canonicalizationMethod = factory.newCanonicalizationMethod(INCLUSIVE, (C14NMethodParameterSpec) null);
         return factory.newSignedInfo(canonicalizationMethod, signatureMethod, singletonList(reference));
-    }
-
-    private Document loadDocument() throws SAXException, IOException, ParserConfigurationException {
-        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-        documentBuilderFactory.setNamespaceAware(true);
-        return documentBuilderFactory.newDocumentBuilder().parse(new FileInputStream("purchaseOrder.xml"));
-    }
-
-    private void writeDocument(Document document) throws FileNotFoundException, TransformerException {
-        OutputStream stream = new FileOutputStream("signedPurchaseOrder.xml");
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
-        transformer.transform(new DOMSource(document), new StreamResult(stream));
     }
 }
