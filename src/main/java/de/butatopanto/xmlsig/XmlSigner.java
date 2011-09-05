@@ -27,8 +27,8 @@ public class XmlSigner {
     private final XMLSignatureFactory factory = XMLSignatureFactory.getInstance(Mechanism_Type_Dom);
     private final PrivateKeyProvider provider;
 
-    public XmlSigner() throws IOException, NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException {
-        this.provider = new Pkcs12PrivateKeyProvider(factory, new PrivateKeyData("mykeystore.jks", "changeit", "changeit"));
+    public XmlSigner(PrivateKeyData keyData) throws IOException, NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException {
+        this.provider = new Pkcs12PrivateKeyProvider(factory, keyData);
     }
 
     public void sign(String pathToUnsignedDocument, String pathToSignedDocument) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, KeyStoreException, IOException, UnrecoverableEntryException, CertificateException, ParserConfigurationException, SAXException, MarshalException, XMLSignatureException, TransformerException {
