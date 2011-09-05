@@ -23,11 +23,12 @@ import static javax.xml.crypto.dsig.Transform.ENVELOPED;
 public class XmlSigner {
 
     public static final String Entire_Document = "";
+
     private final XMLSignatureFactory factory = XMLSignatureFactory.getInstance("DOM");
     private final PrivateKeyProvider provider;
 
     public XmlSigner() throws IOException, NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException {
-        this.provider = new PrivateKeyProvider(factory);
+        this.provider = new Pkcs12PrivateKeyProvider(factory, new PrivateKeyData("mykeystore.jks", "changeit", "changeit"));
     }
 
     public void sign() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, KeyStoreException, IOException, UnrecoverableEntryException, CertificateException, ParserConfigurationException, SAXException, MarshalException, XMLSignatureException, TransformerException {
