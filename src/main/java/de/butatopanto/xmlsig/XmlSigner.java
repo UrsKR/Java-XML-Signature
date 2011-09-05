@@ -20,11 +20,9 @@ import static javax.xml.crypto.dsig.CanonicalizationMethod.INCLUSIVE;
 import static javax.xml.crypto.dsig.SignatureMethod.RSA_SHA1;
 import static javax.xml.crypto.dsig.Transform.ENVELOPED;
 
-public class XmlSigner {
+public class XmlSigner extends DomValidationOperator {
 
     private static final String Entire_Document = "";
-    private static final String Mechanism_Type_Dom = "DOM";
-    private final XMLSignatureFactory factory = XMLSignatureFactory.getInstance(Mechanism_Type_Dom);
     private final PrivateKeyProvider provider;
 
     public XmlSigner(PrivateKeyData keyData) throws IOException, NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException {
