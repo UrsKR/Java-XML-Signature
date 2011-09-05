@@ -16,10 +16,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -59,7 +56,7 @@ public class XmlSigner {
         X509Certificate cert = (X509Certificate) keyEntry.getCertificate();
 // Create the KeyInfo containing the X509Data.
         KeyInfoFactory kif = fac.getKeyInfoFactory();
-        List x509Content = new ArrayList();
+        List<Serializable> x509Content = new ArrayList<Serializable>();
         x509Content.add(cert.getSubjectX500Principal().getName());
         x509Content.add(cert);
         X509Data xd = kif.newX509Data(x509Content);
