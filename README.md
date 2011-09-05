@@ -2,6 +2,7 @@ Java XML Signature
 ==================
 
 This is an example for Java's XML Signature API.
+The foundation is a straight copy of [this Oracle tutorial] (http://java.sun.com/developer/technicalArticles/xml/dig_signature_api/).
 It reads both private key and public key from PKCS12 to sign or validate XML files.
 
 Usage
