@@ -17,13 +17,20 @@ import static java.util.Collections.singletonList;
 
 public class PrivateKeyProvider {
 
+    public static final String Keystore_Type_Pkcs12 = "pkcs12";
     private final XMLSignatureFactory factory;
     private final KeyStore.PrivateKeyEntry keyEntry;
+    private String pathToKeystore;
+    private String passphraseForKeystore;
+    private String passphraseForKey;
 
     public PrivateKeyProvider(XMLSignatureFactory factory) throws IOException, NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableEntryException {
         this.factory = factory;
         KeyStore keyStore = loadKeystore();
         keyEntry = loadSigningKey(keyStore);
+        pathToKeystore = "mykeystore.jks";
+        passphraseForKeystore = "changeit";
+        passphraseForKey = "changeit";
     }
 
     public KeyInfo loadKeyInfo() {
@@ -49,13 +56,13 @@ public class PrivateKeyProvider {
     }
 
     private KeyStore loadKeystore() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
-        KeyStore keyStore = KeyStore.getInstance("JKS");
-        keyStore.load(new FileInputStream("mykeystore.jks"), "changeit".toCharArray());
+        KeyStore keyStore = KeyStore.getInstance(Keystore_Type_Pkcs12);
+        keyStore.load(new FileInputStream(pathToKeystore), passphraseForKeystore.toCharArray());
         return keyStore;
     }
 
     private KeyStore.PrivateKeyEntry loadSigningKey(KeyStore keyStore1) throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException {
         return (KeyStore.PrivateKeyEntry) keyStore1.getEntry
-                ("mykey", new KeyStore.PasswordProtection("changeit".toCharArray()));
+                ("mykey", new KeyStore.PasswordProtection(passphraseForKey.toCharArray()));
     }
 }
