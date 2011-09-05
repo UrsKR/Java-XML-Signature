@@ -27,14 +27,16 @@ public class XmlSigner {
 
     public static final String Entire_Document = "";
     private final XMLSignatureFactory factory = XMLSignatureFactory.getInstance("DOM");
-    private final PrivateKeyProvider provider = new PrivateKeyProvider(factory);
+    private final PrivateKeyProvider provider;
+
+    public XmlSigner() throws IOException, NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, CertificateException {
+        this.provider = new PrivateKeyProvider(factory);
+    }
 
     public void sign() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, KeyStoreException, IOException, UnrecoverableEntryException, CertificateException, ParserConfigurationException, SAXException, MarshalException, XMLSignatureException, TransformerException {
         SignedInfo signedInfo = createSignature();
-        KeyStore keyStore = loadKeystore();
-        KeyStore.PrivateKeyEntry keyEntry = loadSigningKey(keyStore);
-        KeyInfo keyInfo = provider.loadKeyInfo(keyEntry);
-        PrivateKey privateKey = keyEntry.getPrivateKey();
+        KeyInfo keyInfo = provider.loadKeyInfo();
+        PrivateKey privateKey = provider.loadPrivateKey();
         Document doc = loadDocument();
         sign(doc, privateKey, signedInfo, keyInfo);
         writeDocument(doc);
@@ -44,17 +46,6 @@ public class XmlSigner {
         DOMSignContext signContext = new DOMSignContext(privateKey, doc.getDocumentElement());
         XMLSignature signature = factory.newXMLSignature(signedInfo, keyInfo);
         signature.sign(signContext);
-    }
-
-    private KeyStore.PrivateKeyEntry loadSigningKey(KeyStore ks) throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException {
-        return (KeyStore.PrivateKeyEntry) ks.getEntry
-                ("mykey", new KeyStore.PasswordProtection("changeit".toCharArray()));
-    }
-
-    private KeyStore loadKeystore() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
-        KeyStore keyStore = KeyStore.getInstance("JKS");
-        keyStore.load(new FileInputStream("mykeystore.jks"), "changeit".toCharArray());
-        return keyStore;
     }
 
     private SignedInfo createSignature() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
