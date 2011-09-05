@@ -21,63 +21,83 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.singletonList;
+import static javax.xml.crypto.dsig.CanonicalizationMethod.INCLUSIVE;
+import static javax.xml.crypto.dsig.SignatureMethod.RSA_SHA1;
+import static javax.xml.crypto.dsig.Transform.ENVELOPED;
 
 public class XmlSigner {
 
+    public static final String Entire_Document = "";
+    private final XMLSignatureFactory factory = XMLSignatureFactory.getInstance("DOM");
+
     public void sign() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, KeyStoreException, IOException, UnrecoverableEntryException, CertificateException, ParserConfigurationException, SAXException, MarshalException, XMLSignatureException, TransformerException {
-        // Create a DOM XMLSignatureFactory that will be used to
-// generate the enveloped signature.
-        XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
-// Create a Reference to the enveloped document (in this case,
-// you are signing the whole document, so a URI of "" signifies
-// that, and also specify the SHA1 digest algorithm and
-// the ENVELOPED Transform.
-        Reference ref = fac.newReference
-                ("", fac.newDigestMethod(DigestMethod.SHA1, null),
-                        Collections.singletonList
-                                (fac.newTransform
-                                        (Transform.ENVELOPED, (TransformParameterSpec) null)),
-                        null, null);
-// Create the SignedInfo.
-        SignedInfo si = fac.newSignedInfo
-                (fac.newCanonicalizationMethod
-                        (CanonicalizationMethod.INCLUSIVE,
-                                (C14NMethodParameterSpec) null),
-                        fac.newSignatureMethod(SignatureMethod.RSA_SHA1, null),
-                        Collections.singletonList(ref));
-        // Load the KeyStore and get the signing key and certificate.
-        KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(new FileInputStream("mykeystore.jks"), "changeit".toCharArray());
-        KeyStore.PrivateKeyEntry keyEntry =
-                (KeyStore.PrivateKeyEntry) ks.getEntry
-                        ("mykey", new KeyStore.PasswordProtection("changeit".toCharArray()));
-        X509Certificate cert = (X509Certificate) keyEntry.getCertificate();
-// Create the KeyInfo containing the X509Data.
-        KeyInfoFactory kif = fac.getKeyInfoFactory();
+        SignedInfo signedInfo = createSignature();
+        KeyStore ks = loadKeystore();
+        KeyStore.PrivateKeyEntry keyEntry = loadSigningKey(ks);
+        KeyInfo keyInfo = loadKeyInfo(keyEntry);
+        PrivateKey privateKey = keyEntry.getPrivateKey();
+        Document doc = loadDocument();
+        sign(doc, privateKey, signedInfo, keyInfo);
+        writeDocument(doc);
+    }
+
+    private KeyInfo loadKeyInfo(KeyStore.PrivateKeyEntry keyEntry) {
+        X509Certificate cert = loadCertificate(keyEntry);
+        return createKeyInfoFactory(cert);
+    }
+
+    private void sign(Document doc, PrivateKey privateKey, SignedInfo signedInfo, KeyInfo keyInfo) throws MarshalException, XMLSignatureException {
+        DOMSignContext signContext = new DOMSignContext(privateKey, doc.getDocumentElement());
+        XMLSignature signature = factory.newXMLSignature(signedInfo, keyInfo);
+        signature.sign(signContext);
+    }
+
+    private X509Certificate loadCertificate(KeyStore.PrivateKeyEntry keyEntry) {
+        return (X509Certificate) keyEntry.getCertificate();
+    }
+
+    private KeyStore.PrivateKeyEntry loadSigningKey(KeyStore ks) throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException {
+        return (KeyStore.PrivateKeyEntry) ks.getEntry
+                ("mykey", new KeyStore.PasswordProtection("changeit".toCharArray()));
+    }
+
+    private KeyStore loadKeystore() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+        KeyStore keyStore = KeyStore.getInstance("JKS");
+        keyStore.load(new FileInputStream("mykeystore.jks"), "changeit".toCharArray());
+        return keyStore;
+    }
+
+    private SignedInfo createSignature() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+        DigestMethod digestMethod = factory.newDigestMethod(DigestMethod.SHA1, null);
+        Transform transform = factory.newTransform(ENVELOPED, (TransformParameterSpec) null);
+        Reference reference = factory.newReference(Entire_Document, digestMethod, singletonList(transform), null, null);
+        SignatureMethod signatureMethod = factory.newSignatureMethod(RSA_SHA1, null);
+        CanonicalizationMethod canonicalizationMethod = factory.newCanonicalizationMethod(INCLUSIVE, (C14NMethodParameterSpec) null);
+        return factory.newSignedInfo(canonicalizationMethod, signatureMethod, singletonList(reference));
+    }
+
+    private Document loadDocument() throws SAXException, IOException, ParserConfigurationException {
+        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        documentBuilderFactory.setNamespaceAware(true);
+        return documentBuilderFactory.newDocumentBuilder().parse(new FileInputStream("purchaseOrder.xml"));
+    }
+
+    private KeyInfo createKeyInfoFactory(X509Certificate certificate) {
+        KeyInfoFactory keyInfoFactory = factory.getKeyInfoFactory();
         List<Serializable> x509Content = new ArrayList<Serializable>();
-        x509Content.add(cert.getSubjectX500Principal().getName());
-        x509Content.add(cert);
-        X509Data xd = kif.newX509Data(x509Content);
-        KeyInfo ki = kif.newKeyInfo(Collections.singletonList(xd));
-        // Instantiate the document to be signed.
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(true);
-        Document doc = dbf.newDocumentBuilder().parse
-                (new FileInputStream("purchaseOrder.xml"));
-// Create a DOMSignContext and specify the RSA PrivateKey and
-// location of the resulting XMLSignature's parent element.
-        DOMSignContext dsc = new DOMSignContext
-                (keyEntry.getPrivateKey(), doc.getDocumentElement());
-// Create the XMLSignature, but don't sign it yet.
-        XMLSignature signature = fac.newXMLSignature(si, ki);
-// Marshal, generate, and sign the enveloped signature.
-        signature.sign(dsc);
-        // Output the resulting document.
-        OutputStream os = new FileOutputStream("signedPurchaseOrder.xml");
-        TransformerFactory tf = TransformerFactory.newInstance();
-        Transformer trans = tf.newTransformer();
-        trans.transform(new DOMSource(doc), new StreamResult(os));
+        x509Content.add(certificate.getSubjectX500Principal().getName());
+        x509Content.add(certificate);
+        X509Data data = keyInfoFactory.newX509Data(x509Content);
+        return keyInfoFactory.newKeyInfo(singletonList(data));
+    }
+
+    private void writeDocument(Document document) throws FileNotFoundException, TransformerException {
+        OutputStream stream = new FileOutputStream("signedPurchaseOrder.xml");
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        transformer.transform(new DOMSource(document), new StreamResult(stream));
     }
 }
